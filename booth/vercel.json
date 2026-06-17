@@ -1,6 +1,5 @@
 {
-  "rewrites": [
-    { "source": "/", "destination": "/public/gallery.html" },
-    { "source": "/((?!api/|public/).*)", "destination": "/public/$1" }
+  "redirects": [
+    { "source": "/", "destination": "/gallery.html", "permanent": false }
   ]
 }
