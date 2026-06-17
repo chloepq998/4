@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>우리 반, 너의 선택은?</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+
+  <!-- 시작 화면 -->
+  <section id="screen-start" class="screen active">
+    <div class="card intro-card">
+      <p class="eyebrow">학교 속 사회문제 인터랙티브 게임</p>
+      <h1>우리 반,<br>너의 선택은?</h1>
+      <p class="lead">
+        교실에서 매일 일어나는 작은 순간들.<br>
+        누군가는 못 본 척 지나치고, 누군가는 멈춰 섭니다.<br>
+        당신은 어떤 선택을 할까요?
+      </p>
+      <div class="rules">
+        <div class="rule"><span>⏱</span>각 상황마다 <b>8초</b> 안에 선택하세요</div>
+        <div class="rule"><span>💛</span>선택에 따라 <b>용기 게이지</b>가 변해요</div>
+        <div class="rule"><span>🎭</span>6개의 상황, 단 하나의 결과</div>
+      </div>
+      <button id="btn-start" class="btn btn-primary">게임 시작하기</button>
+      <p class="credit">제작: 사회문제 해결 동아리 · 소학술제 전시작</p>
+    </div>
+  </section>
+
+  <!-- 게임 화면 -->
+  <section id="screen-game" class="screen">
+    <div class="hud">
+      <div class="hud-progress">
+        <span id="progress-label">1 / 6</span>
+        <div class="progress-track"><div id="progress-fill" class="progress-fill"></div></div>
+      </div>
+      <div class="hud-gauge">
+        <span class="gauge-emoji">💛</span>
+        <div class="gauge-track"><div id="gauge-fill" class="gauge-fill"></div></div>
+      </div>
+      <div class="hud-timer">
+        <svg viewBox="0 0 36 36" class="timer-ring">
+          <circle class="timer-bg" cx="18" cy="18" r="16"></circle>
+          <circle id="timer-arc" class="timer-arc" cx="18" cy="18" r="16"></circle>
+        </svg>
+        <span id="timer-num">8</span>
+      </div>
+    </div>
+
+    <div class="card scenario-card">
+      <div id="scenario-emoji" class="scenario-emoji">🎨</div>
+      <p id="scenario-place" class="scenario-place">미술 시간</p>
+      <p id="scenario-text" class="scenario-text">상황이 표시됩니다.</p>
+
+      <div id="choices" class="choices"></div>
+    </div>
+
+    <div id="feedback-toast" class="feedback-toast"></div>
+  </section>
+
+  <!-- 결과 화면 -->
+  <section id="screen-result" class="screen">
+    <div class="card result-card">
+      <div id="result-emoji" class="result-emoji">🌱</div>
+      <p class="eyebrow">당신의 결과는</p>
+      <h2 id="result-title">결과 제목</h2>
+      <div class="gauge-track result-gauge-track"><div id="result-gauge-fill" class="gauge-fill"></div></div>
+      <p id="result-score" class="result-score">용기 점수 0 / 18</p>
+      <p id="result-desc" class="result-desc">결과 설명이 표시됩니다.</p>
+
+      <div class="insight-box">
+        <p class="insight-label">💡 알고 계셨나요?</p>
+        <p id="result-insight">인사이트 문장이 표시됩니다.</p>
+      </div>
+
+      <div class="tip-box">
+        <p class="tip-label">🌟 오늘부터 해볼 수 있는 작은 행동</p>
+        <p id="result-tip">팁 문장이 표시됩니다.</p>
+      </div>
+
+      <div class="result-buttons">
+        <button id="btn-replay" class="btn btn-secondary">다시 해보기</button>
+        <button id="btn-discuss" class="btn btn-primary">함께 이야기해보기</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 토론 화면 (부스 운영용) -->
+  <section id="screen-discuss" class="screen">
+    <div class="card discuss-card">
+      <p class="eyebrow">잠깐, 같이 생각해봐요</p>
+      <h2>방관자 효과, 우리 반의 이야기</h2>
+      <ul class="discuss-list">
+        <li>방금 게임에서 가장 망설였던 선택은 어떤 장면이었나요?</li>
+        <li>실제로 비슷한 상황을 본 적이 있다면, 그때 나는 어떻게 행동했나요?</li>
+        <li>주변 친구가 작은 용기를 냈을 때, 분위기가 어떻게 바뀌었나요?</li>
+        <li>우리 동아리는 이 문제를 어떤 아이디어로 풀어보면 좋을까요?</li>
+      </ul>
+      <button id="btn-back-start" class="btn btn-primary">처음으로 돌아가기</button>
+    </div>
+  </section>
+
+</div>
+<script src="script.js"></script>
+</body>
+</html>
