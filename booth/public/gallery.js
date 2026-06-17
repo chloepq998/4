@@ -1,10 +1,18 @@
 const POLL_MS = 2500;
-const wall = document.getElementById("wall");
+const iconGrid = document.getElementById("icon-grid");
 const emptyMsg = document.getElementById("empty-msg");
-const countEl = document.getElementById("app-count");
+const countLabel = document.getElementById("app-count-label");
+const homeScreen = document.getElementById("home-screen");
+const appView = document.getElementById("app-view");
+const appViewTitle = document.getElementById("app-view-title");
+const appViewBody = document.getElementById("app-view-body");
+const btnBack = document.getElementById("btn-back");
+const statusTime = document.getElementById("status-time");
 
 let knownIds = new Set();
 let renderedOnce = false;
+let openAppId = null;
+let latestApps = [];
 
 function votedKey(appId) {
   return `booth-voted-${appId}`;
@@ -18,16 +26,17 @@ function markVoted(appId, option) {
   localStorage.setItem(votedKey(appId), option);
 }
 
-function timeAgo(iso) {
-  const diffSec = Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 1000));
-  if (diffSec < 60) return "방금 전";
-  const diffMin = Math.floor(diffSec / 60);
-  return `${diffMin}분 전`;
+function escapeHtml(str) {
+  const div = document.createElement("div");
+  div.textContent = str;
+  return div.innerHTML;
 }
 
-function renderBody(app) {
-  const meta = TYPE_META[app.type] || { label: app.type, icon: "📱" };
+function escapeAttr(str) {
+  return String(str).replace(/"/g, "&quot;");
+}
 
+function renderAppBody(app) {
   if (app.type === "vote" && app.options && app.options.length) {
     const total = Object.values(app.votes || {}).reduce((a, b) => a + b, 0) || 1;
     const voted = hasVoted(app.id);
@@ -49,64 +58,55 @@ function renderBody(app) {
           </div>`;
       })
       .join("");
-    return `<div>${app.summary ? `<p style="margin-bottom:8px">${escapeHtml(app.summary)}</p>` : ""}${rows}</div>`;
+    return `<div>${app.summary ? `<p style="margin-bottom:10px">${escapeHtml(app.summary)}</p>` : ""}${rows}</div>`;
   }
-
   return `<p>${escapeHtml(app.summary || "")}</p>`;
 }
 
-function escapeHtml(str) {
-  const div = document.createElement("div");
-  div.textContent = str;
-  return div.innerHTML;
-}
+function renderIconGrid(apps) {
+  iconGrid.innerHTML = "";
+  apps.forEach((app) => {
+    const meta = TYPE_META[app.type] || { label: app.type, icon: "📱", color: "#555" };
+    const isNew = renderedOnce && !knownIds.has(app.id);
 
-function escapeAttr(str) {
-  return String(str).replace(/"/g, "&quot;");
-}
-
-function renderWall(apps) {
-  countEl.textContent = apps.length;
-  emptyMsg.style.display = apps.length ? "none" : "block";
-
-  wall.querySelectorAll(".phone").forEach((el) => el.remove());
-
-  apps
-    .slice()
-    .reverse()
-    .forEach((app) => {
-      const meta = TYPE_META[app.type] || { label: app.type, icon: "📱", color: "#555" };
-      const isNew = renderedOnce && !knownIds.has(app.id);
-
-      const phone = document.createElement("div");
-      phone.className = "phone" + (isNew ? " is-new" : "");
-      phone.style.setProperty("--app-color", meta.color);
-      phone.innerHTML = `
-        <div class="phone-notch"></div>
-        <div class="phone-screen">
-          <div class="phone-statusbar"><span>${meta.icon}</span><span>${timeAgo(app.createdAt)}</span></div>
-          <div class="phone-app-header">
-            <div class="phone-app-icon">${meta.icon}</div>
-            <div>
-              <div class="phone-app-title">${escapeHtml(app.title)}</div>
-              <div class="phone-app-type">${meta.label}</div>
-            </div>
-          </div>
-          <div class="phone-body">${renderBody(app)}</div>
-          <div class="phone-footer">이니티움이 만들었어요</div>
-          <div class="home-indicator"></div>
-        </div>
-      `;
-
-      phone.querySelectorAll(".vote-btn").forEach((btn) => {
-        btn.addEventListener("click", () => castVote(app.id, btn.dataset.option));
-      });
-
-      wall.appendChild(phone);
-    });
+    const cell = document.createElement("button");
+    cell.className = "app-icon-cell" + (isNew ? " is-installing" : "");
+    cell.innerHTML = `
+      <div class="app-icon-box" style="background:${meta.color}">${meta.icon}</div>
+      <div class="app-icon-label">${escapeHtml(app.title)}</div>
+    `;
+    cell.addEventListener("click", () => openApp(app.id));
+    iconGrid.appendChild(cell);
+  });
 
   knownIds = new Set(apps.map((a) => a.id));
   renderedOnce = true;
+}
+
+function openApp(appId) {
+  openAppId = appId;
+  renderOpenApp();
+  homeScreen.classList.add("hidden");
+  appView.classList.remove("hidden");
+}
+
+function closeApp() {
+  openAppId = null;
+  homeScreen.classList.remove("hidden");
+  appView.classList.add("hidden");
+}
+
+function renderOpenApp() {
+  const app = latestApps.find((a) => a.id === openAppId);
+  if (!app) {
+    closeApp();
+    return;
+  }
+  appViewTitle.textContent = app.title;
+  appViewBody.innerHTML = renderAppBody(app);
+  appViewBody.querySelectorAll(".vote-btn").forEach((btn) => {
+    btn.addEventListener("click", () => castVote(app.id, btn.dataset.option));
+  });
 }
 
 async function castVote(appId, option) {
@@ -117,18 +117,34 @@ async function castVote(appId, option) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ option }),
   });
-  poll();
+  await poll();
+}
+
+btnBack.addEventListener("click", closeApp);
+
+function updateClock() {
+  const now = new Date();
+  statusTime.textContent = now.toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit", hour12: false });
 }
 
 async function poll() {
   try {
     const res = await fetch("/api/apps");
     const apps = await res.json();
-    renderWall(apps);
+    latestApps = apps;
+
+    countLabel.textContent = `앱 ${apps.length}개 설치됨`;
+    emptyMsg.style.display = apps.length ? "none" : "block";
+    iconGrid.style.display = apps.length ? "grid" : "none";
+
+    renderIconGrid(apps);
+    if (openAppId) renderOpenApp();
   } catch (e) {
     console.error("poll failed", e);
   }
 }
 
+updateClock();
+setInterval(updateClock, 30000);
 poll();
 setInterval(poll, POLL_MS);

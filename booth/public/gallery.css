@@ -10,86 +10,32 @@ body {
 
 .topbar {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 16px;
-  margin-bottom: 36px;
-}
-
-.brand {
-  display: flex;
   align-items: center;
   gap: 14px;
+  margin-bottom: 30px;
 }
 
-.brand-emoji {
-  font-size: 36px;
-}
+.brand-emoji { font-size: 34px; }
 
-.brand h1 {
-  font-size: 24px;
-  margin-bottom: 4px;
-}
+.topbar h1 { font-size: 22px; margin-bottom: 4px; }
 
-.brand p {
-  font-size: 13px;
-  color: #b6aedd;
-}
+.topbar p { font-size: 13px; color: #b6aedd; }
 
-.counter {
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.12);
-  border-radius: 18px;
-  padding: 12px 22px;
-  text-align: center;
-}
-
-#app-count {
-  font-size: 28px;
-  font-weight: 800;
-  color: #ffc857;
-  display: block;
-}
-
-.counter-label {
-  font-size: 12px;
-  color: #cfc8ec;
-}
-
-.wall {
+.stage {
   display: flex;
-  flex-wrap: wrap;
-  gap: 28px;
-  justify-content: flex-start;
-}
-
-.empty-msg {
-  color: #8c84b3;
-  font-size: 15px;
-  margin-top: 40px;
+  justify-content: center;
 }
 
 .phone {
-  width: 190px;
-  height: 390px;
+  width: 360px;
+  height: 740px;
   background: #16151f;
-  border-radius: 34px;
-  border: 6px solid #2a283a;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+  border-radius: 54px;
+  border: 10px solid #2a283a;
+  box-shadow: 0 30px 60px rgba(0,0,0,0.55);
   position: relative;
   overflow: hidden;
   flex-shrink: 0;
-  animation: popIn .5s cubic-bezier(.2,.9,.3,1.2);
-}
-
-.phone.is-new {
-  box-shadow: 0 0 0 3px #ffc857, 0 20px 40px rgba(0,0,0,0.5);
-}
-
-@keyframes popIn {
-  from { opacity: 0; transform: translateY(24px) scale(.9); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 .phone-notch {
@@ -97,86 +43,189 @@ body {
   top: 0;
   left: 50%;
   transform: translateX(-50%);
-  width: 70px;
-  height: 16px;
+  width: 130px;
+  height: 26px;
   background: #2a283a;
-  border-radius: 0 0 12px 12px;
+  border-radius: 0 0 18px 18px;
   z-index: 5;
 }
 
 .phone-screen {
   position: absolute;
   inset: 0;
-  border-radius: 28px;
+  border-radius: 44px;
   display: flex;
   flex-direction: column;
-  background: var(--app-color, #444);
+  background: linear-gradient(160deg, #2b2750 0%, #1c1a33 100%);
+  overflow: hidden;
 }
 
 .phone-statusbar {
   display: flex;
   justify-content: space-between;
-  padding: 10px 16px 0;
-  font-size: 11px;
+  padding: 18px 28px 4px;
+  font-size: 14px;
   font-weight: 700;
-  color: rgba(255,255,255,0.85);
+  color: rgba(255,255,255,0.9);
 }
 
-.phone-app-header {
+/* Home screen */
+.home-screen {
+  flex: 1;
   display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 14px 14px 10px;
+  flex-direction: column;
+  padding: 14px 22px 0;
+  position: relative;
 }
 
-.phone-app-icon {
-  width: 30px;
-  height: 30px;
-  border-radius: 9px;
-  background: rgba(255,255,255,0.2);
+.home-header {
+  text-align: center;
+  margin-bottom: 18px;
+}
+
+.home-header h2 {
+  font-size: 18px;
+  font-weight: 800;
+  color: white;
+}
+
+.home-header p {
+  font-size: 12px;
+  color: #b6aedd;
+  margin-top: 2px;
+}
+
+.icon-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px 14px;
+  align-content: start;
+}
+
+.empty-msg {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  transform: translateY(-30%);
+  text-align: center;
+  color: #8c84b3;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.app-icon-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  background: none;
+  border: none;
+  color: white;
+}
+
+.app-icon-box {
+  width: 58px;
+  height: 58px;
+  border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
+  font-size: 26px;
+  box-shadow: 0 6px 14px rgba(0,0,0,0.35);
 }
 
-.phone-app-title {
-  font-size: 13.5px;
-  font-weight: 800;
-  color: white;
+.app-icon-cell.is-installing .app-icon-box {
+  animation: installPop .6s cubic-bezier(.3,1.3,.4,1.1);
+}
+
+@keyframes installPop {
+  0% { opacity: 0; transform: scale(.3) rotate(-8deg); }
+  60% { opacity: 1; transform: scale(1.18) rotate(3deg); }
+  100% { opacity: 1; transform: scale(1) rotate(0); }
+}
+
+.app-icon-cell.is-installing .app-icon-label {
+  animation: fadeInLabel .5s ease .15s both;
+}
+
+@keyframes fadeInLabel {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.app-icon-label {
+  font-size: 11px;
+  text-align: center;
   line-height: 1.3;
-}
-
-.phone-app-type {
-  font-size: 10px;
-  color: rgba(255,255,255,0.75);
-}
-
-.phone-body {
-  flex: 1;
-  background: rgba(255,255,255,0.94);
-  margin: 0 8px 8px;
-  border-radius: 18px;
-  padding: 14px 12px;
-  color: #2b2640;
-  font-size: 12.5px;
-  line-height: 1.55;
+  max-width: 70px;
   overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+/* App detail view */
+.app-view {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  padding: 10px 18px 0;
+}
+
+.app-view.hidden,
+.home-screen.hidden {
+  display: none;
+}
+
+.app-view-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+#btn-back {
+  background: rgba(255,255,255,0.12);
+  border: none;
+  color: white;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 8px 14px;
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+#app-view-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: white;
+}
+
+.app-view-body {
+  flex: 1;
+  background: rgba(255,255,255,0.96);
+  border-radius: 22px;
+  padding: 18px 16px;
+  color: #2b2640;
+  font-size: 14px;
+  line-height: 1.6;
+  overflow-y: auto;
 }
 
 .vote-option {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 5px;
+  margin-bottom: 12px;
 }
 
 .vote-row {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 
 .vote-btn {
@@ -184,9 +233,9 @@ body {
   text-align: left;
   border: none;
   background: #f1eefc;
-  border-radius: 10px;
-  padding: 7px 9px;
-  font-size: 11.5px;
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-size: 13px;
   cursor: pointer;
   color: #2b2640;
   font-weight: 600;
@@ -198,7 +247,7 @@ body {
 }
 
 .vote-bar-track {
-  height: 6px;
+  height: 7px;
   background: #ece8f9;
   border-radius: 4px;
   overflow: hidden;
@@ -212,24 +261,18 @@ body {
 }
 
 .vote-count {
-  font-size: 10.5px;
+  font-size: 11.5px;
   color: #7a7396;
-}
-
-.phone-footer {
-  text-align: center;
-  font-size: 10px;
-  color: rgba(255,255,255,0.7);
-  padding: 6px 0 14px;
 }
 
 .home-indicator {
   position: absolute;
-  bottom: 8px;
+  bottom: 10px;
   left: 50%;
   transform: translateX(-50%);
-  width: 60px;
-  height: 4px;
+  width: 120px;
+  height: 5px;
   border-radius: 3px;
-  background: rgba(255,255,255,0.6);
+  background: rgba(255,255,255,0.5);
+  z-index: 5;
 }
