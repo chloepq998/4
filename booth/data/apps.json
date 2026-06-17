@@ -1,0 +1,47 @@
+[
+  {
+    "id": "mqhi5qq3b38l",
+    "title": "매점 혼잡도 알림",
+    "type": "congestion",
+    "summary": "혼잡도 82%, 10분 뒤 방문 추천",
+    "createdAt": "2026-06-17T03:19:36.843Z"
+  },
+  {
+    "id": "mqhi5slycicl",
+    "title": "급식 만족도",
+    "type": "vote",
+    "summary": "",
+    "votes": {
+      "맛있어요": 1,
+      "괜찮아요": 0,
+      "별로예요": 0
+    },
+    "options": [
+      "맛있어요",
+      "괜찮아요",
+      "별로예요"
+    ],
+    "createdAt": "2026-06-17T03:19:39.286Z"
+  },
+  {
+    "id": "mqhi66y797up",
+    "title": "복도 혼잡 미니맵",
+    "type": "map",
+    "summary": "3층 중앙 계단 앞 혼잡, 후문 계단 우회 추천",
+    "createdAt": "2026-06-17T03:19:57.871Z"
+  },
+  {
+    "id": "mqhi678scuof",
+    "title": "분실물 제보판",
+    "type": "report",
+    "summary": "검은색 필통, 2층 복도에서 발견, 보관중",
+    "createdAt": "2026-06-17T03:19:58.252Z"
+  },
+  {
+    "id": "mqhi67iyk5y5",
+    "title": "수행평가 폭주 알림",
+    "type": "checklist",
+    "summary": "이번 주 과제 5개, 위험도 91%",
+    "createdAt": "2026-06-17T03:19:58.618Z"
+  }
+]

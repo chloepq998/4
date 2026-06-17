@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>이니티움 구현 콘솔</title>
+<link rel="stylesheet" href="console.css">
+</head>
+<body>
+  <div class="panel">
+    <p class="eyebrow">구현자 콘솔 (관객에게 보이지 않는 화면)</p>
+    <h1>새 프로토타입 추가</h1>
+
+    <label>제목 (앱 이름처럼)
+      <input id="f-title" type="text" placeholder="예: 매점 혼잡도 알림" maxlength="40">
+    </label>
+
+    <label>템플릿 종류
+      <select id="f-type">
+        <option value="congestion">🚦 혼잡도</option>
+        <option value="checklist">📋 체크리스트·일정</option>
+        <option value="vote">🗳️ 투표</option>
+        <option value="report">📮 제보</option>
+        <option value="map">🗺️ 지도</option>
+      </select>
+    </label>
+
+    <label id="summary-field">한 줄 요약 / 핵심 내용
+      <input id="f-summary" type="text" placeholder="예: 혼잡도 82%, 10분 뒤 방문 추천" maxlength="80">
+    </label>
+
+    <label id="options-field" class="hidden">선택지 (한 줄에 하나씩)
+      <textarea id="f-options" rows="4" placeholder="맛있어요&#10;괜찮아요&#10;별로예요"></textarea>
+    </label>
+
+    <button id="btn-submit">갤러리에 추가하기</button>
+    <p id="toast" class="toast"></p>
+  </div>
+
+  <script src="console.js"></script>
+</body>
+</html>

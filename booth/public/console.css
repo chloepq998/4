@@ -1,0 +1,90 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Apple SD Gothic Neo', 'Pretendard', 'Malgun Gothic', 'Noto Sans KR', sans-serif;
+  background: #f4f1ff;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.panel {
+  width: 100%;
+  max-width: 420px;
+  background: white;
+  border-radius: 24px;
+  padding: 32px 28px;
+  box-shadow: 0 18px 40px rgba(43,38,64,0.12);
+}
+
+.eyebrow {
+  font-size: 12px;
+  font-weight: 700;
+  color: #9b5de5;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  margin-bottom: 8px;
+}
+
+h1 {
+  font-size: 22px;
+  margin-bottom: 22px;
+  color: #2b2640;
+}
+
+label {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: #2b2640;
+  margin-bottom: 16px;
+}
+
+label.hidden {
+  display: none;
+}
+
+input, select, textarea {
+  display: block;
+  width: 100%;
+  margin-top: 6px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1.5px solid #e3def5;
+  font-size: 14px;
+  font-family: inherit;
+  resize: vertical;
+}
+
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: #9b5de5;
+}
+
+button {
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 14px;
+  background: #ff8c42;
+  color: white;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+  margin-top: 6px;
+}
+
+button:active {
+  transform: scale(.98);
+}
+
+.toast {
+  margin-top: 14px;
+  text-align: center;
+  font-size: 13px;
+  color: #2bb673;
+  font-weight: 700;
+  min-height: 18px;
+}

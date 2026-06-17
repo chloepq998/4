@@ -1,0 +1,235 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Apple SD Gothic Neo', 'Pretendard', 'Malgun Gothic', 'Noto Sans KR', sans-serif;
+  background: radial-gradient(circle at top, #1c1b29 0%, #100f1a 60%, #0a0a12 100%);
+  color: #f4f1ff;
+  min-height: 100vh;
+  padding: 28px 36px 60px;
+}
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 36px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.brand-emoji {
+  font-size: 36px;
+}
+
+.brand h1 {
+  font-size: 24px;
+  margin-bottom: 4px;
+}
+
+.brand p {
+  font-size: 13px;
+  color: #b6aedd;
+}
+
+.counter {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 18px;
+  padding: 12px 22px;
+  text-align: center;
+}
+
+#app-count {
+  font-size: 28px;
+  font-weight: 800;
+  color: #ffc857;
+  display: block;
+}
+
+.counter-label {
+  font-size: 12px;
+  color: #cfc8ec;
+}
+
+.wall {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 28px;
+  justify-content: flex-start;
+}
+
+.empty-msg {
+  color: #8c84b3;
+  font-size: 15px;
+  margin-top: 40px;
+}
+
+.phone {
+  width: 190px;
+  height: 390px;
+  background: #16151f;
+  border-radius: 34px;
+  border: 6px solid #2a283a;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+  animation: popIn .5s cubic-bezier(.2,.9,.3,1.2);
+}
+
+.phone.is-new {
+  box-shadow: 0 0 0 3px #ffc857, 0 20px 40px rgba(0,0,0,0.5);
+}
+
+@keyframes popIn {
+  from { opacity: 0; transform: translateY(24px) scale(.9); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.phone-notch {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 70px;
+  height: 16px;
+  background: #2a283a;
+  border-radius: 0 0 12px 12px;
+  z-index: 5;
+}
+
+.phone-screen {
+  position: absolute;
+  inset: 0;
+  border-radius: 28px;
+  display: flex;
+  flex-direction: column;
+  background: var(--app-color, #444);
+}
+
+.phone-statusbar {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 16px 0;
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.85);
+}
+
+.phone-app-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 14px 10px;
+}
+
+.phone-app-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  background: rgba(255,255,255,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+.phone-app-title {
+  font-size: 13.5px;
+  font-weight: 800;
+  color: white;
+  line-height: 1.3;
+}
+
+.phone-app-type {
+  font-size: 10px;
+  color: rgba(255,255,255,0.75);
+}
+
+.phone-body {
+  flex: 1;
+  background: rgba(255,255,255,0.94);
+  margin: 0 8px 8px;
+  border-radius: 18px;
+  padding: 14px 12px;
+  color: #2b2640;
+  font-size: 12.5px;
+  line-height: 1.55;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.vote-option {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.vote-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.vote-btn {
+  flex: 1;
+  text-align: left;
+  border: none;
+  background: #f1eefc;
+  border-radius: 10px;
+  padding: 7px 9px;
+  font-size: 11.5px;
+  cursor: pointer;
+  color: #2b2640;
+  font-weight: 600;
+}
+
+.vote-btn:disabled {
+  opacity: .55;
+  cursor: default;
+}
+
+.vote-bar-track {
+  height: 6px;
+  background: #ece8f9;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.vote-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #9b5de5, #6f3fc4);
+  border-radius: 4px;
+  transition: width .4s ease;
+}
+
+.vote-count {
+  font-size: 10.5px;
+  color: #7a7396;
+}
+
+.phone-footer {
+  text-align: center;
+  font-size: 10px;
+  color: rgba(255,255,255,0.7);
+  padding: 6px 0 14px;
+}
+
+.home-indicator {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 4px;
+  border-radius: 3px;
+  background: rgba(255,255,255,0.6);
+}
