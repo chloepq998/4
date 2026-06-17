@@ -417,26 +417,12 @@ body {
     <div class="form-row">
       <div class="form-field">
         <label>장소</label>
-        <select id="form-location">
-          <option value="본관">본관</option>
-          <option value="별관">별관</option>
-          <option value="운동장">운동장</option>
-          <option value="체육관">체육관</option>
-          <option value="도서관">도서관</option>
-          <option value="식당">식당</option>
-          <option value="교실">교실</option>
-          <option value="기타">기타</option>
-        </select>
+        <input type="text" id="form-location" maxlength="30" placeholder="예: 도서관 2층, 교실, 운동장">
       </div>
       <div class="form-field">
         <label>날짜</label>
         <input type="date" id="form-date">
       </div>
-    </div>
-
-    <div class="form-field">
-      <label>상세 위치 <span class="form-limit">선택</span></label>
-      <input type="text" id="form-location-detail" maxlength="30" placeholder="예: 2층 화장실 앞, 3-2반 교실">
     </div>
 
     <div class="form-field">
@@ -799,7 +785,7 @@ function handleReportOverlayClick(e) {
 function resetReportForm() {
   document.getElementById('form-title').value = '';
   document.getElementById('form-content').value = '';
-  document.getElementById('form-location-detail').value = '';
+  document.getElementById('form-location').value = '';
   document.getElementById('form-photo').value = '';
   document.getElementById('cnt-title').textContent = '0/30';
   document.getElementById('cnt-content').textContent = '0/200';
@@ -833,8 +819,7 @@ function submitReport() {
   const category        = document.getElementById('form-category').value;
   const title            = document.getElementById('form-title').value.trim();
   const content          = document.getElementById('form-content').value.trim();
-  const location         = document.getElementById('form-location').value;
-  const locationDetail   = document.getElementById('form-location-detail').value.trim();
+  const location         = document.getElementById('form-location').value.trim();
   const date             = document.getElementById('form-date').value;
   const studentId        = document.getElementById('form-studentid').value.trim();
   const name             = document.getElementById('form-name').value.trim();
@@ -844,6 +829,7 @@ function submitReport() {
 
   if (!title)      { statusEl.textContent = '제목을 입력해주세요.'; return; }
   if (!content)    { statusEl.textContent = '설명을 입력해주세요.'; return; }
+  if (!location)   { statusEl.textContent = '장소를 입력해주세요.'; return; }
   if (!date)       { statusEl.textContent = '날짜를 입력해주세요.'; return; }
   if (!studentId)  { statusEl.textContent = '학번을 입력해주세요.'; return; }
   if (!name)       { statusEl.textContent = '이름을 입력해주세요.'; return; }
@@ -861,7 +847,6 @@ function submitReport() {
     status: 'open',
     timestamp: Date.now()
   };
-  if (locationDetail) data.locationDetail = locationDetail;
 
   const newRef = db.ref('lostfound/items').push();
 
