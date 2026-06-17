@@ -1,10 +1,10 @@
 const http = require("http");
 const fs = require("fs");
 const path = require("path");
+const { listApps, addApp, castVote } = require("./lib/store");
 
 const PORT = process.env.PORT || 3000;
 const PUBLIC_DIR = path.join(__dirname, "public");
-const DATA_FILE = path.join(__dirname, "data", "apps.json");
 
 const MIME = {
   ".html": "text/html; charset=utf-8",
@@ -12,18 +12,6 @@ const MIME = {
   ".js": "text/javascript; charset=utf-8",
   ".json": "application/json; charset=utf-8",
 };
-
-function readApps() {
-  try {
-    return JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
-  } catch {
-    return [];
-  }
-}
-
-function writeApps(apps) {
-  fs.writeFileSync(DATA_FILE, JSON.stringify(apps, null, 2));
-}
 
 function sendJSON(res, status, data) {
   const body = JSON.stringify(data);
@@ -53,75 +41,60 @@ function serveStatic(req, res) {
   });
 }
 
-function handleApi(req, res) {
+function readBody(req) {
+  return new Promise((resolve, reject) => {
+    let body = "";
+    req.on("data", (chunk) => (body += chunk));
+    req.on("end", () => {
+      if (!body) return resolve({});
+      try {
+        resolve(JSON.parse(body));
+      } catch {
+        reject(new Error("invalid json"));
+      }
+    });
+  });
+}
+
+async function handleApi(req, res) {
   if (req.method === "GET" && req.url === "/api/apps") {
-    sendJSON(res, 200, readApps());
+    sendJSON(res, 200, await listApps());
     return;
   }
 
   if (req.method === "POST" && req.url === "/api/apps") {
-    let body = "";
-    req.on("data", (chunk) => (body += chunk));
-    req.on("end", () => {
-      let payload;
-      try {
-        payload = JSON.parse(body);
-      } catch {
-        sendJSON(res, 400, { error: "invalid json" });
-        return;
-      }
-      if (!payload.title || !payload.type) {
-        sendJSON(res, 400, { error: "title and type are required" });
-        return;
-      }
-      const apps = readApps();
-      const newApp = {
-        id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
-        title: String(payload.title).slice(0, 40),
-        type: String(payload.type),
-        summary: String(payload.summary || "").slice(0, 80),
-        votes: payload.type === "vote" ? {} : undefined,
-        options: payload.type === "vote" ? (payload.options || []) : undefined,
-        createdAt: new Date().toISOString(),
-      };
-      if (newApp.type === "vote") {
-        newApp.votes = {};
-        (newApp.options || []).forEach((opt) => (newApp.votes[opt] = 0));
-      }
-      apps.push(newApp);
-      writeApps(apps);
-      sendJSON(res, 201, newApp);
-    });
+    let payload;
+    try {
+      payload = await readBody(req);
+    } catch {
+      sendJSON(res, 400, { error: "invalid json" });
+      return;
+    }
+    try {
+      const app = await addApp(payload);
+      sendJSON(res, 201, app);
+    } catch (e) {
+      sendJSON(res, e.status || 500, { error: e.message });
+    }
     return;
   }
 
   // increment a vote option: POST /api/apps/:id/vote { option }
   const voteMatch = req.url.match(/^\/api\/apps\/([^/]+)\/vote$/);
   if (req.method === "POST" && voteMatch) {
-    let body = "";
-    req.on("data", (chunk) => (body += chunk));
-    req.on("end", () => {
-      let payload;
-      try {
-        payload = JSON.parse(body);
-      } catch {
-        sendJSON(res, 400, { error: "invalid json" });
-        return;
-      }
-      const apps = readApps();
-      const app = apps.find((a) => a.id === voteMatch[1]);
-      if (!app || app.type !== "vote") {
-        sendJSON(res, 404, { error: "vote app not found" });
-        return;
-      }
-      if (!(payload.option in (app.votes || {}))) {
-        sendJSON(res, 400, { error: "unknown option" });
-        return;
-      }
-      app.votes[payload.option] += 1;
-      writeApps(apps);
+    let payload;
+    try {
+      payload = await readBody(req);
+    } catch {
+      sendJSON(res, 400, { error: "invalid json" });
+      return;
+    }
+    try {
+      const app = await castVote(voteMatch[1], payload.option);
       sendJSON(res, 200, app);
-    });
+    } catch (e) {
+      sendJSON(res, e.status || 500, { error: e.message });
+    }
     return;
   }
 

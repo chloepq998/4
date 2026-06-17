@@ -1,0 +1,6 @@
+{
+  "rewrites": [
+    { "source": "/", "destination": "/public/gallery.html" },
+    { "source": "/((?!api/|public/).*)", "destination": "/public/$1" }
+  ]
+}
