@@ -60,9 +60,28 @@ body {
   background: radial-gradient(circle, rgba(37,88,212,.35) 0%, transparent 70%);
   pointer-events: none;
 }
+.brand-bar {
+  width: 100%; max-width: 520px; display: flex; align-items: center;
+  gap: 8px; margin-bottom: 16px;
+}
+.brand-bar .brand-logo {
+  width: 26px; height: 26px; border-radius: 8px;
+  background: linear-gradient(140deg, var(--accent), #60a5fa);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 900; color: white;
+}
+.brand-bar .brand-name {
+  font-size: 14px; font-weight: 800; color: var(--text-dark); letter-spacing: -.3px;
+}
+.brand-bar .brand-name span { color: var(--accent); }
 .hero-eyebrow {
   font-size: 10px; font-weight: 700; letter-spacing: 2px;
   color: #64748b; text-transform: uppercase; margin-bottom: 10px;
+  display: flex; align-items: center; gap: 6px;
+}
+.hero-eyebrow .by-initium {
+  background: rgba(96,165,250,.18); color: #93c5fd;
+  padding: 2px 7px; border-radius: 20px; font-size: 9px; letter-spacing: .5px;
 }
 .hero-title {
   font-size: 30px; font-weight: 900; line-height: 1.15; letter-spacing: -1.5px;
@@ -70,6 +89,22 @@ body {
 }
 .hero-accent { color: #60a5fa; display: block; }
 .hero-desc { font-size: 12px; color: #94a3b8; line-height: 1.7; }
+
+/* ── 푸터 ── */
+.app-footer {
+  width: 100%; max-width: 520px; display: flex; flex-direction: column;
+  align-items: center; gap: 10px; padding: 28px 16px; margin-top: 32px;
+  border-top: 1px solid var(--border);
+}
+.app-footer .footer-logo {
+  width: 30px; height: 30px; border-radius: 9px;
+  background: linear-gradient(140deg, var(--accent), #60a5fa);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; font-weight: 900; color: white;
+}
+.app-footer .footer-text { font-size: 12px; color: var(--text-light); }
+.app-footer .footer-text span { color: #ef4444; }
+.app-footer .footer-text strong { color: var(--text-dark); font-weight: 800; }
 
 @keyframes heroIn {
   from { opacity: 0; transform: translateY(-12px) scale(.98); }
@@ -290,9 +325,15 @@ body {
 
 <div class="page">
 
+  <!-- 브랜드 바 -->
+  <div class="brand-bar">
+    <div class="brand-logo">I</div>
+    <div class="brand-name">Find<span>itium</span></div>
+  </div>
+
   <!-- 히어로 배너 -->
   <div class="hero-banner">
-    <div class="hero-eyebrow">우리 학교 · 분실물 게시판</div>
+    <div class="hero-eyebrow">우리 학교 · 분실물 게시판 <span class="by-initium">by Initium</span></div>
     <h1 class="hero-title">잃어버린 물건,<span class="hero-accent">바로 찾아보세요</span></h1>
     <p class="hero-desc">분실물과 발견물을 등록하고, 학번·이름·반으로 안전하게<br>주인을 찾아주는 우리 학교 분실물 게시판입니다.</p>
   </div>
@@ -338,8 +379,9 @@ body {
   </div>
 
   <!-- 푸터 -->
-  <div style="text-align: center; padding: 24px 16px; color: var(--text-light); font-size: 12px; border-top: 1px solid var(--border); margin-top: 32px;">
-    Made by <strong>Initium</strong>
+  <div class="app-footer">
+    <div class="footer-logo">I</div>
+    <div class="footer-text">Made with <span>♥</span> by <strong>Initium</strong></div>
   </div>
 
 </div><!-- /page -->
@@ -431,7 +473,7 @@ body {
     </div>
 
     <div class="form-field">
-      <label>사진 <span class="form-limit">선택</span></label>
+      <label>사진 <span class="form-limit" id="photo-required-label">선택</span></label>
       <input type="file" id="form-photo" accept="image/*" onchange="onPhotoSelected(event)">
       <div class="photo-preview" id="photo-preview"><img id="photo-preview-img" alt=""></div>
     </div>
@@ -775,6 +817,7 @@ function openReportForm(type) {
   document.getElementById('form-date').value = new Date().toISOString().slice(0, 10);
   document.getElementById('report-form-title').textContent =
     type === 'lost' ? '분실물 등록하기 ✏️' : '발견물 등록하기 ✏️';
+  document.getElementById('photo-required-label').textContent = type === 'found' ? '필수' : '선택';
   fillIdentityFields('form-');
   document.getElementById('overlay-report').classList.add('open');
 }
@@ -836,6 +879,7 @@ function submitReport() {
   if (!content)    { statusEl.textContent = '설명을 입력해주세요.'; return; }
   if (!location)   { statusEl.textContent = '장소를 입력해주세요.'; return; }
   if (!date)       { statusEl.textContent = '날짜를 입력해주세요.'; return; }
+  if (_reportType === 'found' && !_selectedPhotoFile) { statusEl.textContent = '발견물은 사진을 등록해주세요.'; return; }
   if (!studentId)  { statusEl.textContent = '학번을 입력해주세요.'; return; }
   if (!name)       { statusEl.textContent = '이름을 입력해주세요.'; return; }
   if (!className)  { statusEl.textContent = '반을 입력해주세요.'; return; }
