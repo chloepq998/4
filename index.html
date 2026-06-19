@@ -954,6 +954,8 @@ async function submitReport() {
       if (photoURL) data.photoURL = photoURL;
       newRef.set(data).then(() => {
         saveIdentity(studentId, name, className);
+        _allItems.unshift({ id: newRef.key, ...data });
+        renderItemList();
         statusEl.textContent = '✅ 등록되었습니다!';
         setTimeout(() => {
           closeReportForm();
