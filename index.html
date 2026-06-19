@@ -626,7 +626,7 @@ function renderItemList() {
 
   const listEl  = document.getElementById('item-list');
   const countEl = document.getElementById('items-count');
-  countEl.textContent = filtered.length ? filtered.length + '건' : '';
+  countEl.textContent = (filtered.length ? filtered.length + '건' : '') + ` (수신 ${_allItems.length}건)`;
 
   if (!filtered.length) {
     const msg = _allItems.length
@@ -636,7 +636,13 @@ function renderItemList() {
     return;
   }
 
-  listEl.innerHTML = filtered.map(renderItemCard).join('');
+  listEl.innerHTML = filtered.map(item => {
+    try {
+      return renderItemCard(item);
+    } catch (e) {
+      return `<div class="items-empty">⚠️ 항목(${_esc(item.id)}) 표시 오류: ${_esc(e.message)}</div>`;
+    }
+  }).join('');
 }
 
 function statusLabel(item) {
