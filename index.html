@@ -582,6 +582,10 @@ function loadItems() {
     items.reverse();
     _allItems = items;
     renderItemList();
+  }, err => {
+    console.error('목록 로딩 실패:', err);
+    document.getElementById('item-list').innerHTML =
+      `<div class="items-empty">목록을 불러올 수 없어요. (${_esc(err.code || err.message)})<br>잠시 후 다시 시도해주세요.</div>`;
   });
 }
 
@@ -776,6 +780,10 @@ function loadComments(itemId) {
       snap.forEach(c => items.push({ id: c.key, ...c.val() }));
       items.reverse();
       renderComments(items);
+    }, err => {
+      console.error('댓글 로딩 실패:', err);
+      document.getElementById('comment-list').innerHTML =
+        `<div class="comments-empty">댓글을 불러올 수 없어요. (${_esc(err.code || err.message)})</div>`;
     });
 }
 
