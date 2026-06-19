@@ -877,8 +877,21 @@ function onPhotoSelected(e) {
 }
 
 async function sha256Hex(str) {
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
-  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+  if (window.crypto && window.crypto.subtle) {
+    try {
+      const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+      return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+    } catch (e) { /* SubtleCrypto 사용 불가 시 아래 폴백 사용 */ }
+  }
+  let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
+  for (let i = 0; i < str.length; i++) {
+    const ch = str.charCodeAt(i);
+    h1 = Math.imul(h1 ^ ch, 2654435761);
+    h2 = Math.imul(h2 ^ ch, 1597334677);
+  }
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+  return (h1 >>> 0).toString(16).padStart(8, '0') + (h2 >>> 0).toString(16).padStart(8, '0');
 }
 
 async function submitReport() {
@@ -908,47 +921,53 @@ async function submitReport() {
   btnEl.textContent = '등록 중…';
   statusEl.textContent = '';
 
-  const passwordHash = await sha256Hex(password);
-
-  const data = {
-    type: _reportType,
-    category, title, content,
-    location, date,
-    studentId, name, className,
-    passwordHash,
-    status: 'open',
-    timestamp: Date.now()
-  };
-
-  const newRef = db.ref('lostfound/items').push();
-
-  function finish(photoURL) {
-    if (photoURL) data.photoURL = photoURL;
-    newRef.set(data).then(() => {
-      saveIdentity(studentId, name, className);
-      statusEl.textContent = '✅ 등록되었습니다!';
-      setTimeout(() => {
-        closeReportForm();
-        resetReportForm();
-        btnEl.disabled = false;
-        btnEl.textContent = '등록하기';
-      }, 1200);
-    }).catch(() => {
-      statusEl.textContent = '오류가 발생했어요. 다시 시도해주세요.';
-      btnEl.disabled = false;
-      btnEl.textContent = '등록하기';
-    });
+  function fail() {
+    statusEl.textContent = '오류가 발생했어요. 인터넷 연결을 확인하고 다시 시도해주세요.';
+    btnEl.disabled = false;
+    btnEl.textContent = '등록하기';
   }
 
-  if (_selectedPhotoFile) {
-    const ext = (_selectedPhotoFile.name.split('.').pop() || 'jpg').toLowerCase();
-    storage.ref('lostfound_photos/' + newRef.key + '.' + ext)
-      .put(_selectedPhotoFile)
-      .then(snap => snap.ref.getDownloadURL())
-      .then(url => finish(url))
-      .catch(() => finish(null));
-  } else {
-    finish(null);
+  try {
+    const passwordHash = await sha256Hex(password);
+
+    const data = {
+      type: _reportType,
+      category, title, content,
+      location, date,
+      studentId, name, className,
+      passwordHash,
+      status: 'open',
+      timestamp: Date.now()
+    };
+
+    const newRef = db.ref('lostfound/items').push();
+
+    function finish(photoURL) {
+      if (photoURL) data.photoURL = photoURL;
+      newRef.set(data).then(() => {
+        saveIdentity(studentId, name, className);
+        statusEl.textContent = '✅ 등록되었습니다!';
+        setTimeout(() => {
+          closeReportForm();
+          resetReportForm();
+          btnEl.disabled = false;
+          btnEl.textContent = '등록하기';
+        }, 1200);
+      }).catch(fail);
+    }
+
+    if (_selectedPhotoFile) {
+      const ext = (_selectedPhotoFile.name.split('.').pop() || 'jpg').toLowerCase();
+      storage.ref('lostfound_photos/' + newRef.key + '.' + ext)
+        .put(_selectedPhotoFile)
+        .then(snap => snap.ref.getDownloadURL())
+        .then(url => finish(url))
+        .catch(() => finish(null));
+    } else {
+      finish(null);
+    }
+  } catch (e) {
+    fail();
   }
 }
 
