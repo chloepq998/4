@@ -955,6 +955,11 @@ async function submitReport() {
       newRef.set(data).then(() => {
         saveIdentity(studentId, name, className);
         statusEl.textContent = '✅ 등록되었습니다!';
+        // 등록한 항목이 현재 필터/검색 조건에 걸려 안 보이는 걸 방지
+        document.getElementById('search-input').value = '';
+        _searchQuery = '';
+        setTypeFilter('all');
+        setCategoryFilter('all');
         setTimeout(() => {
           closeReportForm();
           resetReportForm();
