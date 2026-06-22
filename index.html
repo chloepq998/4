@@ -576,10 +576,10 @@ function fillIdentityFields(idPrefix) {
 
 /* ── 항목 목록 ── */
 function loadItems() {
-  db.ref('lostfound/items').orderByChild('timestamp').on('value', snap => {
+  db.ref('lostfound/items').on('value', snap => {
     const items = [];
     snap.forEach(c => items.push({ id: c.key, ...c.val() }));
-    items.reverse();
+    items.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
     _allItems = items;
     renderItemList();
   }, err => {
