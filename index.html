@@ -505,6 +505,7 @@ const firebaseConfig = {
   messagingSenderId: "703786885039",
   appId: "1:703786885039:web:1b8e087a6a5a5fef50595a"
 };
+const DB_REST_BASE = "https://findinitium-default-rtdb.firebaseio.com";
 const CATEGORY_META = {
   '전자기기':  { clr: '#2563eb', bg: '#dbeafe' },
   '지갑·카드': { clr: '#dc2626', bg: '#fee2e2' },
@@ -516,7 +517,8 @@ const CATEGORY_META = {
 
 let _allItems = [];
 let _curItemId = null;
-let _commentsListener = null;
+let _itemsPollHandle = null;
+let _commentsPollHandle = null;
 let _commentsListenerItemId = null;
 let _filterType = 'all';
 let _filterCategory = 'all';
@@ -574,19 +576,25 @@ function fillIdentityFields(idPrefix) {
   if (cEl && !cEl.value) cEl.value = saved.className || '';
 }
 
-/* ── 항목 목록 ── */
+/* ── 항목 목록 ──
+   일부 학교·통신사 네트워크에서 Firebase의 실시간(웹소켓) 연결이 막혀
+   .on('value')가 데이터를 못 받아오는 경우가 있어, 일반 HTTPS 요청으로
+   주기적으로 새로 받아오는 방식을 사용한다. */
 function loadItems() {
-  db.ref('lostfound/items').on('value', snap => {
-    const items = [];
-    snap.forEach(c => items.push({ id: c.key, ...c.val() }));
-    items.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-    _allItems = items;
-    renderItemList();
-  }, err => {
-    console.error('목록 로딩 실패:', err);
-    document.getElementById('item-list').innerHTML =
-      `<div class="items-empty">목록을 불러올 수 없어요. (${_esc(err.code || err.message)})<br>잠시 후 다시 시도해주세요.</div>`;
-  });
+  fetch(DB_REST_BASE + '/lostfound/items.json')
+    .then(res => res.json())
+    .then(data => {
+      const items = [];
+      for (const key in data) items.push({ id: key, ...data[key] });
+      items.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+      _allItems = items;
+      renderItemList();
+    })
+    .catch(err => {
+      console.error('목록 로딩 실패:', err);
+      document.getElementById('item-list').innerHTML =
+        `<div class="items-empty">목록을 불러올 수 없어요.<br>잠시 후 다시 시도해주세요.</div>`;
+    });
 }
 
 function setTypeFilter(type) {
@@ -756,11 +764,11 @@ async function resolveItem(itemId) {
 
 function closeItem() {
   document.getElementById('overlay-item').classList.remove('open');
-  if (_commentsListener && _commentsListenerItemId) {
-    db.ref('lostfound/comments/' + _commentsListenerItemId).off('value', _commentsListener);
-    _commentsListener = null;
-    _commentsListenerItemId = null;
+  if (_commentsPollHandle) {
+    clearInterval(_commentsPollHandle);
+    _commentsPollHandle = null;
   }
+  _commentsListenerItemId = null;
   _curItemId = null;
 }
 
@@ -769,28 +777,34 @@ function handleItemOverlayClick(e) {
 }
 
 /* ── 댓글 ── */
+function fetchComments(itemId) {
+  fetch(DB_REST_BASE + '/lostfound/comments/' + itemId + '.json')
+    .then(res => res.json())
+    .then(data => {
+      const items = [];
+      for (const key in data) items.push({ id: key, ...data[key] });
+      items.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+      renderComments(items);
+    })
+    .catch(err => {
+      console.error('댓글 로딩 실패:', err);
+      document.getElementById('comment-list').innerHTML =
+        `<div class="comments-empty">댓글을 불러올 수 없어요.</div>`;
+    });
+}
+
 function loadComments(itemId) {
-  if (_commentsListener && _commentsListenerItemId) {
-    db.ref('lostfound/comments/' + _commentsListenerItemId).off('value', _commentsListener);
-    _commentsListener = null;
+  if (_commentsPollHandle) {
+    clearInterval(_commentsPollHandle);
+    _commentsPollHandle = null;
   }
   document.getElementById('comment-list').innerHTML = '<div class="comments-loading">불러오는 중…</div>';
   document.getElementById('comment-status').textContent = '';
   fillIdentityFields('comment-');
 
   _commentsListenerItemId = itemId;
-  _commentsListener = db.ref('lostfound/comments/' + itemId)
-    .orderByChild('timestamp')
-    .on('value', snap => {
-      const items = [];
-      snap.forEach(c => items.push({ id: c.key, ...c.val() }));
-      items.reverse();
-      renderComments(items);
-    }, err => {
-      console.error('댓글 로딩 실패:', err);
-      document.getElementById('comment-list').innerHTML =
-        `<div class="comments-empty">댓글을 불러올 수 없어요. (${_esc(err.code || err.message)})</div>`;
-    });
+  fetchComments(itemId);
+  _commentsPollHandle = setInterval(() => fetchComments(itemId), 3000);
 }
 
 function renderComments(items) {
@@ -996,6 +1010,7 @@ document.addEventListener('keydown', e => {
 });
 
 loadItems();
+_itemsPollHandle = setInterval(loadItems, 4000);
 </script>
 </body>
 </html>
