@@ -320,6 +320,35 @@ body {
 }
 .admin-empty { font-size: 12px; color: var(--text-light); text-align: center; padding: 20px 0; }
 
+.admin-stats { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+.admin-stat-box { flex: 1; min-width: 70px; background: var(--bg); border-radius: 10px; padding: 10px; text-align: center; }
+.admin-stat-box .num { font-size: 17px; font-weight: 800; color: var(--text-dark); }
+.admin-stat-box .lbl { font-size: 10px; color: var(--text-light); margin-top: 2px; }
+.admin-stat-cats { font-size: 11px; color: var(--text-mid); margin-bottom: 14px; line-height: 1.6; }
+
+.admin-filter-bar { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.admin-filter-bar input[type="text"] {
+  flex: 1; min-width: 120px; padding: 8px 10px; border: 1.5px solid var(--border);
+  border-radius: 8px; font-size: 12px; font-family: inherit; outline: none;
+}
+.admin-filter-bar select {
+  padding: 8px 6px; border: 1.5px solid var(--border); border-radius: 8px;
+  font-size: 12px; font-family: inherit; outline: none; background: white;
+}
+
+.admin-item-reporter { font-size: 11px; color: var(--text-light); margin-bottom: 6px; }
+.admin-btn.edit { background: #7c3aed; }
+.admin-btn.save { background: var(--type-found-clr); }
+.admin-edit-area:not(:empty) {
+  margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border);
+  display: flex; flex-direction: column; gap: 6px;
+}
+.admin-edit-area input, .admin-edit-area select, .admin-edit-area textarea {
+  width: 100%; padding: 8px 10px; border: 1.5px solid var(--border); border-radius: 8px;
+  font-size: 12px; font-family: inherit; outline: none;
+}
+.admin-edit-area textarea { resize: none; line-height: 1.5; }
+
 @media (min-width: 480px) {
   .detail-panel, .form-panel, .admin-panel { padding: 28px 28px 36px; }
 }
@@ -519,6 +548,25 @@ body {
     </div>
 
     <div id="admin-content-area" style="display:none">
+      <div class="admin-stats" id="admin-stats"></div>
+      <div class="admin-stat-cats" id="admin-stats-cats"></div>
+      <div class="admin-filter-bar">
+        <input type="text" id="admin-search-input" placeholder="학번, 이름, 제목으로 검색" oninput="onAdminSearchInput(this.value)">
+        <select id="admin-type-filter" onchange="onAdminFilterChange()">
+          <option value="all">전체 유형</option>
+          <option value="lost">분실물</option>
+          <option value="found">발견물</option>
+        </select>
+        <select id="admin-status-filter" onchange="onAdminFilterChange()">
+          <option value="all">전체 상태</option>
+          <option value="open">미해결</option>
+          <option value="resolved">해결됨</option>
+        </select>
+        <select id="admin-sort-order" onchange="onAdminFilterChange()">
+          <option value="newest">최신순</option>
+          <option value="oldest">오래된순</option>
+        </select>
+      </div>
       <div id="admin-item-list"></div>
     </div>
   </div>
@@ -561,6 +609,11 @@ let _selectedPhotoFile = null;
 let _selectedIcon = ICON_CHOICES[0];
 let _searchDebounceTimer = null;
 let _isAdmin = false;
+let _adminSearchQuery = '';
+let _adminTypeFilter = 'all';
+let _adminStatusFilter = 'all';
+let _adminSortOrder = 'newest';
+let _adminSearchDebounceTimer = null;
 const ADMIN_PASSWORD_HASH = '31d1ed7764aa01f9e14ab8df7993b01bb046aa7a9ef32cac89483ae1c3865d0e';
 
 // 상태 변수들을 먼저 초기화한 뒤 Firebase를 연결한다 — CDN 로드 실패 등으로
@@ -1117,13 +1170,63 @@ function showAdminContent() {
   renderAdminList();
 }
 
+function renderAdminStats() {
+  const statsEl = document.getElementById('admin-stats');
+  const catsEl = document.getElementById('admin-stats-cats');
+  if (!statsEl || !catsEl) return;
+  const total = _allItems.length;
+  const lostCount = _allItems.filter(i => i.type === 'lost').length;
+  const foundCount = _allItems.filter(i => i.type === 'found').length;
+  const resolvedCount = _allItems.filter(i => i.status === 'resolved').length;
+  const resolveRate = total ? Math.round(resolvedCount / total * 100) : 0;
+
+  statsEl.innerHTML = `
+    <div class="admin-stat-box"><div class="num">${total}</div><div class="lbl">전체</div></div>
+    <div class="admin-stat-box"><div class="num">${lostCount}</div><div class="lbl">분실물</div></div>
+    <div class="admin-stat-box"><div class="num">${foundCount}</div><div class="lbl">발견물</div></div>
+    <div class="admin-stat-box"><div class="num">${resolveRate}%</div><div class="lbl">해결률</div></div>`;
+
+  const catCounts = {};
+  _allItems.forEach(i => { catCounts[i.category] = (catCounts[i.category] || 0) + 1; });
+  const catEntries = Object.entries(catCounts);
+  catsEl.textContent = catEntries.length
+    ? '카테고리: ' + catEntries.map(([cat, n]) => cat + ' ' + n).join(' · ')
+    : '';
+}
+
+function onAdminSearchInput(value) {
+  clearTimeout(_adminSearchDebounceTimer);
+  _adminSearchDebounceTimer = setTimeout(() => {
+    _adminSearchQuery = value.trim().toLowerCase();
+    renderAdminList();
+  }, 150);
+}
+
+function onAdminFilterChange() {
+  _adminTypeFilter = document.getElementById('admin-type-filter').value;
+  _adminStatusFilter = document.getElementById('admin-status-filter').value;
+  _adminSortOrder = document.getElementById('admin-sort-order').value;
+  renderAdminList();
+}
+
 function renderAdminList() {
+  renderAdminStats();
   const listEl = document.getElementById('admin-item-list');
-  if (!_allItems.length) {
-    listEl.innerHTML = '<div class="admin-empty">등록된 항목이 없어요.</div>';
+  const filtered = _allItems.filter(item => {
+    if (_adminTypeFilter !== 'all' && item.type !== _adminTypeFilter) return false;
+    if (_adminStatusFilter !== 'all' && item.status !== _adminStatusFilter) return false;
+    if (_adminSearchQuery) {
+      const text = ((item.title || '') + ' ' + (item.studentId || '') + ' ' + (item.name || '')).toLowerCase();
+      if (!text.includes(_adminSearchQuery)) return false;
+    }
+    return true;
+  }).sort((a, b) => _adminSortOrder === 'oldest' ? (a.timestamp || 0) - (b.timestamp || 0) : (b.timestamp || 0) - (a.timestamp || 0));
+
+  if (!filtered.length) {
+    listEl.innerHTML = '<div class="admin-empty">조건에 맞는 항목이 없어요.</div>';
     return;
   }
-  listEl.innerHTML = _allItems.map(adminItemRowHtml).join('');
+  listEl.innerHTML = filtered.map(adminItemRowHtml).join('');
 }
 
 function adminItemRowHtml(item) {
@@ -1138,13 +1241,63 @@ function adminItemRowHtml(item) {
         <span class="item-status-badge ${statusClass}">${statusLabel(item)}</span>
         <span class="admin-item-title">${_esc(item.title)}</span>
       </div>
+      <div class="admin-item-reporter">학번 ${_esc(item.studentId)} · ${_esc(item.name)} · ${_esc(item.className)}</div>
       <div class="admin-item-actions">
         <button class="admin-btn toggle" onclick="adminToggleResolve('${item.id}')">${toggleLabel}</button>
+        <button class="admin-btn edit" onclick="adminToggleEdit('${item.id}')">수정</button>
         <button class="admin-btn comments" onclick="adminToggleComments('${item.id}')">댓글 관리</button>
         <button class="admin-btn danger" onclick="adminDeleteItem('${item.id}')">항목 삭제</button>
       </div>
+      <div class="admin-edit-area" id="admin-edit-${item.id}"></div>
       <div class="admin-comment-list" id="admin-comments-${item.id}"></div>
     </div>`;
+}
+
+function adminToggleEdit(itemId) {
+  const area = document.getElementById('admin-edit-' + itemId);
+  if (area.dataset.open === '1') {
+    area.dataset.open = '0';
+    area.innerHTML = '';
+    return;
+  }
+  const item = _allItems.find(i => i.id === itemId);
+  if (!item) return;
+  area.dataset.open = '1';
+  const catOptions = Object.keys(CATEGORY_META).map(c =>
+    `<option value="${c}"${c === item.category ? ' selected' : ''}>${c}</option>`).join('');
+  area.innerHTML = `
+    <select id="admin-edit-category-${item.id}">${catOptions}</select>
+    <input type="text" id="admin-edit-title-${item.id}" value="${_esc(item.title)}" maxlength="30" placeholder="제목">
+    <textarea id="admin-edit-content-${item.id}" maxlength="200" rows="3" placeholder="설명">${_esc(item.content)}</textarea>
+    <input type="text" id="admin-edit-location-${item.id}" value="${_esc(item.location)}" maxlength="30" placeholder="장소">
+    <input type="date" id="admin-edit-date-${item.id}" value="${_esc(item.date)}">
+    <button class="admin-btn save" onclick="adminSaveEdit('${item.id}')">저장</button>`;
+}
+
+async function adminSaveEdit(itemId) {
+  const item = _allItems.find(i => i.id === itemId);
+  if (!item) return;
+  const updates = {
+    category: document.getElementById('admin-edit-category-' + itemId).value,
+    title: document.getElementById('admin-edit-title-' + itemId).value.trim(),
+    content: document.getElementById('admin-edit-content-' + itemId).value.trim(),
+    location: document.getElementById('admin-edit-location-' + itemId).value.trim(),
+    date: document.getElementById('admin-edit-date-' + itemId).value
+  };
+  if (!updates.title || !updates.content || !updates.location || !updates.date) {
+    alert('모든 항목을 입력해주세요.');
+    return;
+  }
+  try {
+    await db.ref('lostfound/items/' + itemId).update(updates);
+    Object.assign(item, updates);
+    document.getElementById('admin-edit-' + itemId).innerHTML = '';
+    document.getElementById('admin-edit-' + itemId).dataset.open = '0';
+    renderAdminList();
+    renderItemList();
+  } catch (e) {
+    alert('수정 중 오류가 발생했어요.');
+  }
 }
 
 async function adminToggleResolve(itemId) {
