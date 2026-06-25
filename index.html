@@ -307,8 +307,56 @@ body {
   color: var(--text-mid); min-height: 20px;
 }
 
+/* ── 관리자 ── */
+.admin-link {
+  background: none; border: none; cursor: pointer; font-size: 11px;
+  color: var(--text-light); margin-left: auto; padding: 4px 8px;
+}
+.admin-link:hover { color: var(--text-mid); }
+
+.admin-panel {
+  background: var(--white); border-radius: 20px 20px 0 0;
+  padding: 20px 20px 36px; width: 100%; max-width: 520px;
+  position: relative; max-height: 92vh; overflow-y: auto;
+  animation: up .22s ease;
+}
+.admin-panel h2 { font-size: 17px; font-weight: 800; margin-bottom: 18px; color: var(--text-dark); }
+.admin-login-row { display: flex; gap: 8px; }
+.admin-login-row input {
+  flex: 1; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: 8px;
+  font-size: 13px; font-family: inherit; outline: none;
+}
+.admin-login-row input:focus { border-color: var(--accent); }
+.admin-login-row button {
+  padding: 0 16px; border: none; border-radius: 8px; background: var(--accent);
+  color: white; font-size: 13px; font-weight: 700; cursor: pointer;
+}
+.admin-login-status { font-size: 12px; color: var(--type-lost-clr); margin-top: 8px; min-height: 16px; }
+
+.admin-item-row { background: var(--bg); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; }
+.admin-item-head { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; flex-wrap: wrap; }
+.admin-item-title { font-size: 13px; font-weight: 700; color: var(--text-dark); flex: 1; min-width: 0; }
+.admin-item-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.admin-btn {
+  border: none; border-radius: 8px; padding: 6px 10px; font-size: 11px; font-weight: 700;
+  cursor: pointer; color: white;
+}
+.admin-btn.toggle    { background: var(--status-resolved-clr); }
+.admin-btn.comments  { background: var(--accent); }
+.admin-btn.danger    { background: var(--type-lost-clr); }
+.admin-comment-list { margin-top: 8px; border-top: 1px solid var(--border); padding-top: 8px; }
+.admin-comment-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  font-size: 11px; color: var(--text-mid); padding: 4px 0;
+}
+.admin-comment-row button {
+  border: none; background: none; color: var(--type-lost-clr); font-size: 11px; cursor: pointer; font-weight: 700;
+  flex-shrink: 0;
+}
+.admin-empty { font-size: 12px; color: var(--text-light); text-align: center; padding: 20px 0; }
+
 @media (min-width: 480px) {
-  .detail-panel, .form-panel { padding: 28px 28px 36px; }
+  .detail-panel, .form-panel, .admin-panel { padding: 28px 28px 36px; }
 }
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
@@ -323,6 +371,7 @@ body {
   <div class="brand-bar">
     <div class="brand-logo">I</div>
     <div class="brand-name">Find<span>itium</span></div>
+    <button class="admin-link" onclick="openAdmin()">⚙️ 관리자</button>
   </div>
 
   <!-- 히어로 배너 -->
@@ -492,6 +541,29 @@ body {
 </div>
 
 <!-- =========================================================
+  관리자 오버레이
+========================================================= -->
+<div class="overlay" id="overlay-admin" onclick="handleAdminOverlayClick(event)">
+  <div class="admin-panel" id="admin-panel">
+    <div class="card-handle" aria-hidden="true"></div>
+    <button class="close-btn" onclick="closeAdmin()">✕</button>
+    <h2>⚙️ 관리자</h2>
+
+    <div id="admin-login-area">
+      <div class="admin-login-row">
+        <input type="password" id="admin-password-input" placeholder="관리자 비밀번호">
+        <button onclick="submitAdminLogin()">확인</button>
+      </div>
+      <div class="admin-login-status" id="admin-login-status"></div>
+    </div>
+
+    <div id="admin-content-area" style="display:none">
+      <div id="admin-item-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- =========================================================
   SCRIPTS
 ========================================================= -->
 <script>
@@ -524,6 +596,8 @@ let _searchQuery = '';
 let _reportType = null;
 let _selectedPhotoFile = null;
 let _searchDebounceTimer = null;
+let _isAdmin = false;
+const ADMIN_PASSWORD_HASH = '31d1ed7764aa01f9e14ab8df7993b01bb046aa7a9ef32cac89483ae1c3865d0e';
 
 // 상태 변수들을 먼저 초기화한 뒤 Firebase를 연결한다 — CDN 로드 실패 등으로
 // 아래 초기화가 실패해도 필터·오버레이 같은 UI 조작은 계속 동작하도록 함
@@ -981,9 +1055,159 @@ async function submitReport() {
   }
 }
 
+/* ── 관리자 ── */
+function openAdmin() {
+  document.getElementById('overlay-admin').classList.add('open');
+  document.getElementById('admin-password-input').value = '';
+  document.getElementById('admin-login-status').textContent = '';
+  if (_isAdmin) {
+    showAdminContent();
+  } else {
+    document.getElementById('admin-login-area').style.display = '';
+    document.getElementById('admin-content-area').style.display = 'none';
+  }
+}
+
+function closeAdmin() {
+  document.getElementById('overlay-admin').classList.remove('open');
+}
+
+function handleAdminOverlayClick(e) {
+  if (e.target === document.getElementById('overlay-admin')) closeAdmin();
+}
+
+async function submitAdminLogin() {
+  const input = document.getElementById('admin-password-input');
+  const statusEl = document.getElementById('admin-login-status');
+  const hash = await sha256Hex(input.value);
+  if (hash !== ADMIN_PASSWORD_HASH) {
+    statusEl.textContent = '비밀번호가 일치하지 않습니다.';
+    return;
+  }
+  _isAdmin = true;
+  showAdminContent();
+}
+
+function showAdminContent() {
+  document.getElementById('admin-login-area').style.display = 'none';
+  document.getElementById('admin-content-area').style.display = '';
+  renderAdminList();
+}
+
+function renderAdminList() {
+  const listEl = document.getElementById('admin-item-list');
+  if (!_allItems.length) {
+    listEl.innerHTML = '<div class="admin-empty">등록된 항목이 없어요.</div>';
+    return;
+  }
+  listEl.innerHTML = _allItems.map(adminItemRowHtml).join('');
+}
+
+function adminItemRowHtml(item) {
+  const typeLabel = item.type === 'lost' ? '분실물' : '발견물';
+  const typeClass = item.type === 'lost' ? 'type-lost' : 'type-found';
+  const statusClass = item.status === 'resolved' ? 'status-resolved' : 'status-open';
+  const toggleLabel = item.status === 'resolved' ? '미해결로 전환' : '해결 처리';
+  return `
+    <div class="admin-item-row" id="admin-row-${item.id}">
+      <div class="admin-item-head">
+        <span class="item-type-badge ${typeClass}">${typeLabel}</span>
+        <span class="item-status-badge ${statusClass}">${statusLabel(item)}</span>
+        <span class="admin-item-title">${_esc(item.title)}</span>
+      </div>
+      <div class="admin-item-actions">
+        <button class="admin-btn toggle" onclick="adminToggleResolve('${item.id}')">${toggleLabel}</button>
+        <button class="admin-btn comments" onclick="adminToggleComments('${item.id}')">댓글 관리</button>
+        <button class="admin-btn danger" onclick="adminDeleteItem('${item.id}')">항목 삭제</button>
+      </div>
+      <div class="admin-comment-list" id="admin-comments-${item.id}"></div>
+    </div>`;
+}
+
+async function adminToggleResolve(itemId) {
+  const item = _allItems.find(i => i.id === itemId);
+  if (!item) return;
+  const newStatus = item.status === 'resolved' ? 'open' : 'resolved';
+  const updates = { status: newStatus };
+  if (newStatus === 'resolved') updates.resolvedAt = Date.now();
+  try {
+    await db.ref('lostfound/items/' + itemId).update(updates);
+    item.status = newStatus;
+    renderAdminList();
+    renderItemList();
+  } catch (e) {
+    alert('처리 중 오류가 발생했어요.');
+  }
+}
+
+async function adminDeleteItem(itemId) {
+  const item = _allItems.find(i => i.id === itemId);
+  if (!item) return;
+  if (!confirm(`"${item.title}" 항목을 삭제할까요? 댓글도 함께 삭제됩니다.`)) return;
+  try {
+    await db.ref('lostfound/items/' + itemId).remove();
+    await db.ref('lostfound/comments/' + itemId).remove();
+    if (item.photoURL) {
+      storage.refFromURL(item.photoURL).delete().catch(() => {});
+    }
+    _allItems = _allItems.filter(i => i.id !== itemId);
+    renderAdminList();
+    renderItemList();
+  } catch (e) {
+    alert('삭제 중 오류가 발생했어요.');
+  }
+}
+
+function adminToggleComments(itemId) {
+  const area = document.getElementById('admin-comments-' + itemId);
+  if (area.dataset.open === '1') {
+    area.dataset.open = '0';
+    area.innerHTML = '';
+    return;
+  }
+  area.dataset.open = '1';
+  loadAdminComments(itemId);
+}
+
+function loadAdminComments(itemId) {
+  const area = document.getElementById('admin-comments-' + itemId);
+  area.innerHTML = '<div class="admin-empty">불러오는 중…</div>';
+  db.ref('lostfound/comments/' + itemId).once('value').then(snap => {
+    const comments = [];
+    snap.forEach(c => comments.push({ id: c.key, ...c.val() }));
+    renderAdminComments(itemId, comments);
+  }).catch(() => {
+    area.innerHTML = '<div class="admin-empty">댓글을 불러올 수 없어요.</div>';
+  });
+}
+
+function renderAdminComments(itemId, comments) {
+  const area = document.getElementById('admin-comments-' + itemId);
+  if (!area || area.dataset.open !== '1') return;
+  if (!comments.length) {
+    area.innerHTML = '<div class="admin-empty">댓글이 없어요.</div>';
+    return;
+  }
+  area.innerHTML = comments.map(c => `
+    <div class="admin-comment-row">
+      <span>${_esc(c.className)} ${_esc(c.name)}: ${_esc(c.text)}</span>
+      <button onclick="adminDeleteComment('${itemId}','${c.id}')">삭제</button>
+    </div>`).join('');
+}
+
+async function adminDeleteComment(itemId, commentId) {
+  if (!confirm('이 댓글을 삭제할까요?')) return;
+  try {
+    await db.ref('lostfound/comments/' + itemId + '/' + commentId).remove();
+    loadAdminComments(itemId);
+  } catch (e) {
+    alert('댓글 삭제 중 오류가 발생했어요.');
+  }
+}
+
 /* ── 전역 키보드/초기화 ── */
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') { closeItem(); closeReportForm(); }
+  if (e.key === 'Escape') { closeItem(); closeReportForm(); closeAdmin(); }
 });
 
 loadItems();
