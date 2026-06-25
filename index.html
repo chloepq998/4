@@ -259,6 +259,13 @@ body {
 .form-field textarea { resize: none; line-height: 1.6; }
 .photo-preview { margin-top: 8px; display: none; }
 .photo-preview img { width: 100%; max-height: 180px; object-fit: cover; border-radius: 10px; }
+.icon-picker { display: flex; flex-wrap: wrap; gap: 6px; }
+.icon-choice {
+  width: 38px; height: 38px; border-radius: 10px; border: 1.5px solid var(--border);
+  background: white; font-size: 18px; cursor: pointer; display: flex;
+  align-items: center; justify-content: center; transition: border-color .15s, background .15s;
+}
+.icon-choice.selected { border-color: var(--accent); background: var(--bg); }
 .form-submit-btn {
   width: 100%; padding: 13px; border: none; border-radius: 12px;
   background: var(--accent); color: white; font-size: 14px; font-weight: 700;
@@ -464,6 +471,11 @@ body {
       <div class="photo-preview" id="photo-preview"><img id="photo-preview-img" alt=""></div>
     </div>
 
+    <div class="form-field">
+      <label>아이콘 <span class="form-limit">사진이 없을 때 목록에 표시돼요</span></label>
+      <div class="icon-picker" id="icon-picker"></div>
+    </div>
+
     <div class="form-row">
       <div class="form-field">
         <label>학번</label>
@@ -534,6 +546,7 @@ const CATEGORY_META = {
   '도서':      { clr: '#ca8a04', bg: '#fef9c3' },
   '기타':      { clr: '#64748b', bg: '#f1f5f9' },
 };
+const ICON_CHOICES = ['📦','👕','👜','📱','💳','📚','⌚','🔑','🎒','⚽','🧢','☂️'];
 
 let _allItems = [];
 let _curItemId = null;
@@ -545,6 +558,7 @@ let _filterCategory = 'all';
 let _searchQuery = '';
 let _reportType = null;
 let _selectedPhotoFile = null;
+let _selectedIcon = ICON_CHOICES[0];
 let _searchDebounceTimer = null;
 let _isAdmin = false;
 const ADMIN_PASSWORD_HASH = '31d1ed7764aa01f9e14ab8df7993b01bb046aa7a9ef32cac89483ae1c3865d0e';
@@ -710,7 +724,7 @@ function renderItemCard(item) {
   const statusClass = item.status === 'resolved' ? 'status-resolved' : 'status-open';
   const photoHtml = item.photoURL
     ? `<img class="photo-thumb" src="${_esc(item.photoURL)}" alt="">`
-    : `<div class="photo-thumb photo-placeholder">📦</div>`;
+    : `<div class="photo-thumb photo-placeholder">${_esc(item.icon) || '📦'}</div>`;
   const locationText = _esc(item.location) + (item.locationDetail ? ' · ' + _esc(item.locationDetail) : '');
 
   return `
@@ -915,6 +929,17 @@ function handleReportOverlayClick(e) {
   if (e.target === document.getElementById('overlay-report')) closeReportForm();
 }
 
+function renderIconPicker() {
+  document.getElementById('icon-picker').innerHTML = ICON_CHOICES.map(icon =>
+    `<button type="button" class="icon-choice${icon === _selectedIcon ? ' selected' : ''}" onclick="selectIcon('${icon}')">${icon}</button>`
+  ).join('');
+}
+
+function selectIcon(icon) {
+  _selectedIcon = icon;
+  renderIconPicker();
+}
+
 function resetReportForm() {
   document.getElementById('form-title').value = '';
   document.getElementById('form-content').value = '';
@@ -925,6 +950,8 @@ function resetReportForm() {
   document.getElementById('cnt-content').textContent = '0/200';
   document.getElementById('photo-preview').style.display = 'none';
   _selectedPhotoFile = null;
+  _selectedIcon = ICON_CHOICES[0];
+  renderIconPicker();
   const statusEl = document.getElementById('form-status');
   statusEl.textContent = '';
 }
@@ -1007,6 +1034,7 @@ async function submitReport() {
       type: _reportType,
       category, title, content,
       location, date,
+      icon: _selectedIcon,
       studentId, name, className,
       passwordHash,
       status: 'open',
