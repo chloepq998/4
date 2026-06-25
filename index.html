@@ -528,6 +528,7 @@ const firebaseConfig = {
   appId: "1:703786885039:web:1b8e087a6a5a5fef50595a"
 };
 const DB_REST_BASE = "https://findinitium-default-rtdb.firebaseio.com";
+const STORAGE_REST_BASE = "https://firebasestorage.googleapis.com/v0/b/" + firebaseConfig.storageBucket + "/o";
 const CATEGORY_META = {
   '전자기기':  { clr: '#2563eb', bg: '#dbeafe' },
   '지갑·카드': { clr: '#dc2626', bg: '#fee2e2' },
@@ -557,7 +558,23 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 const storage = firebase.storage();
 
-/* ── 유틸 ── */
+/* ── 유틸 ──
+   사진 업로드는 Storage SDK의 다단계(resumable) 업로드 프로토콜 대신
+   단일 요청 REST 업로드를 사용한다 — 학교 네트워크에서 resumable 프로토콜이
+   중간에 막혀 업로드가 끝없이 멈추는 문제가 있었음 (실시간 리스너가 막혀
+   REST 폴링으로 바꾼 것과 같은 이유). */
+function uploadPhotoREST(path, file) {
+  const encodedPath = encodeURIComponent(path);
+  return fetch(STORAGE_REST_BASE + '?uploadType=media&name=' + encodedPath, {
+    method: 'POST',
+    headers: { 'Content-Type': file.type || 'application/octet-stream' },
+    body: file
+  }).then(res => {
+    if (!res.ok) throw new Error('업로드 실패: ' + res.status);
+    return res.json();
+  }).then(meta => STORAGE_REST_BASE + '/' + encodedPath + '?alt=media&token=' + meta.downloadTokens);
+}
+
 function _esc(s) {
   if (!s) return '';
   return String(s)
@@ -988,13 +1005,15 @@ async function submitReport() {
 
     const newRef = db.ref('lostfound/items').push();
 
-    function finish(photoURL) {
+    function finish(photoURL, photoFailed) {
       if (photoURL) data.photoURL = photoURL;
       newRef.set(data).then(() => {
         saveIdentity(studentId, name, className);
         _allItems.unshift({ id: newRef.key, ...data });
         renderItemList();
-        statusEl.textContent = '✅ 등록되었습니다!';
+        statusEl.textContent = photoFailed
+          ? '✅ 등록되었습니다! (사진 업로드에 실패해 사진 없이 등록됐어요)'
+          : '✅ 등록되었습니다!';
         // 등록한 항목이 현재 필터/검색 조건에 걸려 안 보이는 걸 방지
         document.getElementById('search-input').value = '';
         _searchQuery = '';
@@ -1011,13 +1030,14 @@ async function submitReport() {
 
     if (_selectedPhotoFile) {
       const ext = (_selectedPhotoFile.name.split('.').pop() || 'jpg').toLowerCase();
-      storage.ref('lostfound_photos/' + newRef.key + '.' + ext)
-        .put(_selectedPhotoFile)
-        .then(snap => snap.ref.getDownloadURL())
-        .then(url => finish(url))
-        .catch(() => finish(null));
+      const photoPath = 'lostfound_photos/' + newRef.key + '.' + ext;
+      const giveUp = new Promise(resolve => setTimeout(() => resolve(null), 15000));
+      Promise.race([
+        uploadPhotoREST(photoPath, _selectedPhotoFile).catch(() => null),
+        giveUp
+      ]).then(url => finish(url, !url));
     } else {
-      finish(null);
+      finish(null, false);
     }
   } catch (e) {
     fail();
