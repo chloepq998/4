@@ -5,6 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>우리 학교 분실물 찾기</title>
 
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2558d4">
+<link rel="icon" href="icons/favicon.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="분실물 찾기">
+
 <!-- =========================================================
   STYLES
 ========================================================= -->
@@ -576,6 +584,12 @@ body {
   SCRIPTS
 ========================================================= -->
 <script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('service-worker.js').catch(() => {});
+  });
+}
+
 // ── Firebase 초기화 (findinitium 전용 프로젝트) ──
 const firebaseConfig = {
   apiKey: "AIzaSyDwRRCR-XUqDTNZiCOLBpPyS0rGzzpxbwo",

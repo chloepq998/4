@@ -13,6 +13,9 @@
 
 로그인 시스템은 없으며, 글·댓글 작성 시 입력하는 학번·이름·반으로 신원을 식별합니다.
 
+PWA(Progressive Web App)로 동작하여 모바일 브라우저에서 "홈 화면에 추가" 시
+아이콘이 생기고 앱처럼 실행됩니다 (`manifest.json`, `service-worker.js`).
+
 ## 실행 방법
 
 ```bash
